@@ -1,0 +1,181 @@
+一,Mysql的函数
+	--1,常见的
+		#查询所有列
+		select * from emp;
+		#只查ename这个字段的值
+		select ename from emp;
+
+		#upper函数用来 把值全转大写
+		select ename,upper(ename) from emp;
+
+		#lower函数用来 把值全转小写
+		select ename,lower(ename) from emp;
+
+		#length函数用来 获取字段值 的长度
+		select ename,length(ename) from emp
+
+		#substr(x,y,z)函数用来  截取数据
+		#把x字段,从y位置开始,要截取z位
+		select ename,substr(ename,1,2),substr(ename,2,3) from emp
+
+		#concat(m,n)函数用来  拼接数据   --可以避免安全问题
+		#把m字段的值,拼接上n的值 
+		select ename,concat(ename,'xyz') from emp
+
+		#replace(x,y,z)函数用来 替换值,
+		#把x字段的值,进行替换.把y字符换成z的内容
+		#把ename字段里的a字符换成b
+		select ename,replace(ename,'a','b') from emp
+
+		
+		#round函数用来 对数据四舍五入取整  
+		#ceil向上取整 , floor向下取整
+		select comm,round(comm),ceil(comm),floor(comm) from emp
+
+		#获取当前的系统时间 年月日时分秒
+		select now()
+		select curdate() #年月日
+		select curtime() #时分秒
+
+		#year()年 month()月 day()日 hour()时 minute()分 second()秒
+		select now(),year(now()),month(now()),
+		day(now()),hour(now()),minute(now()),second(now())
+
+
+		#下面的数据里出现了符号 '   #  这些都是SQL语句里的特殊符号,
+		#必须转义,使用斜杠转义
+		select 'abc\'d'
+	--2,条件查询
+		#出现了重复数据
+		select job  from emp
+		#给数据 去重
+		select distinct job  from emp
+
+
+		#只查询empno=100 where后直接写过滤条件
+		select * from emp where empno=100
+
+		select * from emp where ename='tony'
+
+		#按照job过滤出来两条数据
+		select * from emp where job='员工'
+
+		#两个条件 job  & empno -- and表示并且关系 --要满足所有条件
+		select * from emp where job='员工'  and  empno=500
+
+		#两个条件 job  | job -- or表示或者关系 --要满足一个条件就可以
+		select * from emp where job='员工'  or  job='副总'
+
+		#条件永远成立
+		select * from emp where 1=1
+
+		#查询名字里包含a的记录 %是通配符,可以自动匹配n个字符
+		select * from emp where  ename like 'a%'#以a开始的--高效
+		select * from emp where  ename like '%a%'#包含a的
+		select * from emp where  ename like '%a'#以a结尾的
+
+		select * from emp where ename like 'l%'#以l开始的,后面有几个都行
+		select * from emp where ename like 'l__'#用_匹配具体的字符个数
+
+		#过滤mgr 是 null的记录
+		select * from emp where mgr is null
+		#过滤mgr 不是 null的记录
+		select * from emp where mgr is not null
+
+		#过滤[3000,10000]的
+		select * from emp where sal>=3000 and sal<=10000
+		#between ... and -- 和上面类似 [3000,10000]
+		select * from emp where sal between 3000  and 10000
+
+		#分页技术--limit n--要获取前n条数据
+		select * from emp limit 1
+		#分页技术--limit m,n--要从m开始(第一条记录编号是0),获取n条数据
+		select * from emp limit 0,2
+		select * from emp limit 1,3
+		
+		#按照sal排序,默认是升序(从小到大)
+		select * from emp order by sal #升序
+		select * from emp order by sal asc#升序
+		select * from emp order by sal desc #降序
+
+		#按照ename排序,按照字母的自然顺序abcdefghi.....
+		select * from emp order by ename
+
+
+	--3,聚合函数
+		#count()用来 统计总记录数
+		select * from emp
+		select count(*) from emp#总数
+		#过滤job是员工 的总记录数
+		select count(*) from emp where job = '员工' 
+		#根据字段值 统计总记录数
+		select count(mgr) from emp
+
+		#效果和count(*)效果一样 都不会过滤为null的值
+		#和count(字段)不太一样 会过滤为null的记录
+		select count(1) from emp
+
+		#获取sal的 max()求最大值 min()求最小值  avg()求平均数 sum()求总和
+		select max(sal),min(sal),sum(sal),avg(sal)  from emp;
+		
+		#ifnull(m,n)函数用来 对空的值 做处理-m是字段,n替换成的具体指
+		select comm,ifnull(comm,0) from emp
+
+		#统计每个人的年薪
+		select ename, sal, comm, sal*12+comm*12  from emp
+		#过滤null的元素,否则无法正常运算,得不到结果
+		select ename, sal, comm, sal*12+ifnull(comm,0)*12  from emp
+		#用as 给列 设置别名 -- as也可以省略
+		select ename, sal, comm, sal*12+ifnull(comm,0)*12 as 年薪 from emp
+	
+	--4,分组
+		#获取部门里的最高薪
+		select max(sal) from emp #得到1个结果
+		select deptno from emp group by deptno #得到5个结果
+
+		#先按部门分组,分别每组的最大值
+		select deptno,max(sal) from emp   group by deptno
+
+		#把相同的job分成一组,获取最大值
+		select job,max(sal) from emp group by job
+
+		#把相同的mgr分成一组,获取平均数
+		select mgr,avg(comm) from emp group by mgr 
+		#使用having给group by后的结果加过滤条件
+		having mgr is not null #不是空的就查出来
+
+		#查询 每个部门的平均工资
+		#别名 在where里不许用
+		select  avg(sal) A  from   emp group by deptno 
+		#把分组查出来的数据,,,再加条件,,但是 group by的过滤配合having不是where ,,
+		having A<8000
+	
+二,Oracle数据库
+	--1,和Mysql的对比
+		--管理库的方式不同:
+			Mysql--数据库--表--记录
+			Oracle--用户--表--记录
+		--数据类型不同:
+			Mysql--int double varchar
+			Oracle--number(8,2)m是数据的长度n小数的位数
+						--varchar2()优化了mysqlvarchar
+		--语法上的区别:
+			Oracle和Mysql都支持简单的SQL语句,Oracle提供了更丰富			的函数
+		--更大的区别
+			MySQL免费版 + 适合分布式架构
+			Oracle收费的	
+
+	--2,Oracle的使用
+		--安装Oracle的服务器端 
+			10g 11g 12g....  OracleXEUniv简版.exe
+		--安装Oracle的客户端 
+			plsql工具  plsql_developer_green
+	--3,使用plsql
+		--使用指定用户名和密码打开工具 
+		--创建用户-新建-用户-输入账号密码users/temp/权限
+		--切换登录的用户,重新登录就好了
+		--表--找到tables-右键点新建-起个表名-加一些字段
+		--记录--选中表名-右键编辑数据
+
+java培优皮皮霞留
+QQ-2250432165

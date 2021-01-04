@@ -1,0 +1,158 @@
+1、该如何学习复杂前沿的知识？
+
+2、数据库事务 
+	经典例子：
+	a和b，a向b转100w
+	a钱-100w（北京），b钱+100w（西安）
+	网络突然断了，a扣减100w，此时网络断掉，b没有获得钱？
+
+	事务！解决4大问题，
+
+	原子性、一致性、隔离性、持久性，有了这4方面保障，数据库就安全了。
+	支持事务，两大类差异：
+	1）关系型数据库：Oracle、MySQL、SQLServer
+		支持事务
+
+	2）非关系型数据库：redis分布式内存数据库，mongodb，hbase。。。。
+		大多不支持事务
+
+	事务相关语句：
+	1）autocommit 开关，是否自动提交事务，mysql开，oracle关
+	2）操作：全部成功 commit 提交，全部失败 rollback 回滚
+
+#默认autocommit自动提交1，改成手动0
+SET @@autocommit = 0;
+
+#声明开启事务，日常事务关闭
+BEGIN;	#开始，开启事务
+
+#给jack员工薪水扣除100
+UPDATE emp SET sal=sal-100 WHERE empno=100;
+#给tony员工薪水加100
+UPDATE emp SET sal= sal+100 WHERE empno=200;
+
+COMMIT;	#事务的提交
+ROLLBACK;	#当程序发生异常，回滚
+
+
+
+
+
+
+假如中间执行语句很多，
+如果回滚 rollback；
+
+	检查点：
+	savepoint name
+	出错，不用回滚到最开始，回滚到检查点
+	rollback to name
+
+
+购买一个商品过程：事务
+1）下单
+2）支付
+3）物流
+
+SET @@autocommit = 0; #手动提交
+BEGIN;	#开启事务
+
+SAVEPOINT chen;		#设置检查点
+
+UPDATE emp SET sal = sal-100 
+WHERE empno=100;
+
+
+UPDATE emp SET sal = sal+100
+WHERE empno=200;
+
+#commit;	#事务提交，事务就结束了
+
+#错误时才使用
+ROLLBACK TO chen;	#回滚到这个检查点
+
+	3）实际开发中，如果执行一段sql，修改数据，或者删除数据
+	默认mysql自动提交，如果执行完成删除语句，数据库的数据已经被改变。
+	不小心删除了，删除后才恍然大悟。
+
+SET @@autocommit = 0; #手动提交
+BEGIN;	#开启事务
+
+#设置检查点
+SAVEPOINT chen;
+
+#删除
+DELETE FROM emp;
+
+#删除正确
+COMMIT;
+
+#删除错误
+ROLLBACK TO chen;
+
+
+5）子查询（嵌套查询）
+在查询SQL语句中含有另外查询
+a. 子查询返回一个值
+b. 子查询返回多个值，多条记录
+
+--列出tony所在部门的所有人员
+外键：两张表的关联，部门表dept，员工表emp
+在员工表中增加一个字段，就是部门表的主键
+这个字段的值必须引用部门表的deptno的
+外键约束（sql规定）
+
+根据deptno部门编号去部门表dept查询部门名称
+
+SELECT * FROM emp
+WHERE deptno=
+(
+SELECT deptno FROM emp 
+WHERE ename='tony'
+);
+
+Query : select * from emp  where deptno=  (  select deptno,ename from emp   where ename='tony'  )
+Error Code : 4078
+参数不正确 数据类型 含小数
+Illegal parameter data types decimal and row for operation '='
+
+#用子查询实现，列出部门2所在员工的信息
+SELECT * FROM emp
+WHERE deptno IN  #in子查询
+(
+	SELECT deptno FROM emp
+	WHERE deptno=2 OR deptno=1
+);
+
+6）表关联（表直接关系）
+
+1-dept 部门表 2-emp 员工表 3-empext 员工信息扩展表
+4-student 学生表 5-tb_user 用户表
+
+a. 表必然有关联吗？
+	a1）没有关系（最常见）student、tb_user
+	a2）有关系：
+
+关系：4种
+1）一对一
+2）一对多
+3）多对一：反过来就是一对多
+4）多对多：登录用户和菜单，可以写成一对多和多对一
+dept和emp有关（一对多）
+	一个部门下可以有多个员工
+emp和dept有关（多对一）
+	要求：一个员工只能有一个实际部门
+	一个员工可以从属一个部门
+	多个员工在一个部门下
+emp和empext有关（一对一）
+	一个员工有一个扩展信息
+empext和emp有关（一对一）
+	一个扩展信息对一个员工
+
+描述表关系时，有一个主体（主表），有一个附属的（从表）
+
+直接问中心的项目经理要这个软件的安装包，
+一路安装即可
+power designer 
+
+
+

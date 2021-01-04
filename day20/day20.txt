@@ -1,0 +1,87 @@
+一,数据库
+	--1,结构
+		数据库->表->表记录(字段/字段值)
+	--2,数据库的操作
+		--连接数据库:mysql -uroot -proot
+		--新建:create database 数据库名
+		--查看:show databases 
+		--删库:drop database 数据库名
+		--图形化工具:
+			右键-新建数据库-起个名-选成utf8(避免中文乱码)-ok
+	--3,表的操作	
+		--使用库:use 数据库名	
+		--创建表:create table 表名(字段名字 字段类型(最大长度))
+			举个栗子: create table user(name varchar(10));
+		--查看表:show tables	
+		--删除表:drop tables 表名
+			举个栗子: drop table user;
+		--查看表结构: desc 表名	
+		--图形化操作:
+			创建表-输入字段名称和字段类型和字段长度-保存-输入表名-确定
+!!--4,表记录的操作CRUD
+		--插入C:
+			--insert into 表名 values(字段1的值,字段2的值,字段3的值);
+			--如果是varchar类型的数据,要加一对单引号
+			--举个栗子:	
+				#注释--向门店表插入数据,整数数据直接写,varchar数据要加单引号
+				insert into tb_door values( 1 , '1号店' , '010-9999' ) ;
+				insert into tb_door values( 2 ,'2号店','010-666')
+				#插入id和tel的值
+				insert into tb_door(id,tel) values(3,'010-888')
+		--查询R:select * from 表名
+					 select 字段1,字段2,字段3 from 表名
+			--举个栗子:
+					#只查id的值
+					select id  from tb_door
+					#查询数据 * 表示所有列/字段 --
+					select * from tb_door
+					#查询id字段的值和tel字段的值 -- 高效的SQL
+					select id,tel from tb_door		 
+		--修改U:update 表名 set 字段=? 
+				#更新所有记录的tel值
+				update tb_door set tel='666666'
+				#只更新了id=1的tel值 where用来表示过滤
+				update tb_door set tel='1111'  where  id=1
+		--删除D:delete from 表名
+			#删除表里的 所有 记录
+			delete from tb_door
+			#按照过滤条件删除  where用来过滤
+			delete from tb_door where id=3 
+	--5,数据库里的数据类型
+		--整数类型:int bigint smallint..常用的是int
+		--小数类型:double float decimal numberic ..常用double
+		--字符类型:char(长度固定,查的快) varchar(长度可变,查的慢)
+						字符类型的数据,要加一对单引号!!!!!
+		--日期类型:
+			date     time   datetime      timestamp
+			年月日   时分秒	年月日时分秒   时间戳(毫秒值)
+	--6,字段的约束
+		--主键约束:是指每张表都应该设置主键,可以自增,通常不能为空
+							create table stu(
+								#不维护id的值,交给数据库自动递增
+								id int primary key auto_increment
+							)
+							#不用我们维护id的值,数据库会自动从1开始自增
+							insert into stu values(null);
+							insert into stu values(null);
+							insert into stu values(null);
+		--非空约束:是指一个字段的值是否可以为空
+			create table user2(
+    		id int primary key auto_increment,
+    		#该字段添加了非空约束,必须有值
+    		password varchar(50) not null #非空约束
+			);
+			--password字段有值,OK
+			insert into user2 values(null,'123');
+			--password字段没有值,没通过非空约束的检查,会报错
+			insert into user2 values(null,null);
+		--唯一约束:是指一个字段的值不能重复	
+			create table test(
+    		id int primary key auto_increment,
+    		username varchar(50) unique #唯一约束
+			);
+			#username的值可以成功,因为不重复
+			insert into test values(null,'lisi');
+			#username的值已经存在了,再来相同数据就不唯一啦,会报错
+			insert into test values(null,'lisi');
+--						

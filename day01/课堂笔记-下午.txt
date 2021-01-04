@@ -1,0 +1,197 @@
+1、表之间的关系
+	4种：
+	一对一
+	一对多：一个学校和多个教室
+	多对一：多个教室属于一个学校
+	多对多：
+	使用最频繁一对多结构
+2、在实际开发中
+	不光有编码阶段：
+	软件的生命周期：
+	1、需求调研
+	2、需求评审（专家）
+	3、概要设计（框架）
+	4、详细设计（伪代码）	PDM 表设计
+	5、编码
+	6、测试
+	7、部署客户服务器上
+	8、用户评审
+	9、正式上线运行
+	10、维护期
+	11、项目结束
+
+3、表设计最好的工具 Power Desinger 
+	部门和用户：一对多
+	表中一对一时，箭头线橘色的
+	表总一对多时，箭头线蓝色的
+	主表的主键（primary key）在子表中出现，也称为子表的外键
+
+	自关联（自己是自己的子表）
+
+	学生和课程：多对多
+	多对多需要3张表来表达，
+	多对多，把两个主表主键都拿过来
+
+4、表关系解决什么问题？
+	多表联查
+	需求：查询tony他的信息，还包括部门名称
+
+	select * from emp where empno=200
+
+	4种：
+	a）where硬查
+	b）inner join 内连接
+	c）left outer join 左外连接，left join 左连接
+	d）right outer join 右外连接，right join 右连接	
+
+
+a）where硬查
+
+#*代表两张表所有字段，前面emp.*，后面dept.*
+SELECT * FROM emp,dept
+WHERE empno=200 AND emp.deptno=dept.deptno
+
+#某个员工的名字和他所在部门的名称
+SELECT 
+  ename,dname
+FROM emp,dept
+WHERE empno=200 AND emp.deptno=dept.deptno
+
+#内连接 inner join
+#1.单独写出各自表的查询SQL语句
+#2.把它们信息连接起来，写上关联条件 on
+#3.在大的结果集resultset上挑取要的字段
+#ambiguous  字段名如果多个，必须写上出处
+
+select
+	d.deptno,dname,ename
+from
+(select deptno,dname from dept) d
+inner join
+(select ename,deptno from emp) e
+on d.deptno = e.deptno
+
+inner join和left join
+内连接，这个值必须在对应表出现，才算数，
+如果没有就不在最终结果集中
+部门表中3条记录，只有2条在员工表中出现，
+2条是在结果中有的，第3条就没有
+
+左连接，左边表内记录，不管后边表有没有这个值，都出现
+部门表的3条记录都出现
+后面没有对应记录，都用null替代
+
+右连接和作连接是一回事，表的前后不同
+右连接就可以颠倒顺序就是左连接
+
+内连接，两边都有的匹配记录才出现（严谨）
+*左连接，左边的表的所有记录都出现，没有匹配，其数据null
+右连接，右边的表的所有记录都出现，没有匹配，其数据null
+
+当两边数据都匹配（业务如果正常情况下都应该匹配）
+inner join = left join = right join
+
+
+#左连接 left join
+
+SELECT
+  d.deptno,e.deptno,dname,ename
+FROM
+(SELECT deptno,dname FROM dept) d
+LEFT JOIN
+(SELECT deptno,ename FROM emp) e
+ON e.deptno = d.deptno
+
+#简写
+SELECT 
+  d.dname,e.ename
+FROM dept d
+LEFT JOIN emp e
+ON d.deptno = e.deptno
+
+在开发中，表关联小于等于3张
+阿里为什么要进行这样要求呢？强制
+执行性能，多表联查会比单表慢很多
+a）单表直接结果，结果如果非常频繁，数据库缓存支持，内存
+	内存要比磁盘快100倍！
+b）多表联查，底层先实现笛卡尔积，构建一个大大结果集，放在内存中
+	构建过程非常浪费时间，数据量非常大（mysql单表千万条，oracle单表支持上亿）
+	
+怎么去解决不让我很多表联查
+1）构建中间结果集时，尽量小，提前筛选数据
+2）分而治之，多次查询
+
+
+怎么提高表的查询性能？
+1）索引！			第一个想到，成本最低
+2）分库，分表（mysql百万）
+3）主从复制，读写分离
+
+index 你用过
+创建一个表，设置主键，主键查询速度非常快？
+以为有索引，（表的主键，是自动创建索引）
+
+索引为什么快？
+1）索引是独立存在，索引占空间
+	查询数据时，无需到表中去查，先到索引去查
+	主键：int/bigint(long)，排序，
+	查询一个1，一条一条记录遍历（全表遍历）
+	1,5,2,3,4
+	排序：数据预处理
+	1,2,3,4,5（二分查找）
+	唯一值 unique
+
+索引快的原因：
+1）独自空间
+2）排序
+3）算法：mysql中算法，btree+（数据结构）
+
+索引分类：
+1）唯一索引 unique，数据库这个字段内容不能重复
+2）单值索引，索引是一个字段
+3）符合索引，多个字段形成一个索引
+
+原则：索引不要建立太多字段？
+索引也占空间，
+索引字段非整数类型，性能没有整数高
+
+操作数据库表：insert/update/delete
+会对索引有影响吗？造成重新构造索引，如果记录很多，构建时间长
+
+
+小结：
+1）事务：transaction
+	如果数据库处理有多个SQL语句，非查询SQL，此时需要事务
+	事务会造成一定性能损耗，一般不推荐
+
+2）数据库支持事务，mysql，redis不支持
+	ACID
+	Atomicity 原子性，多步改动，
+、		必须要么都成功commit，要么都失败rollback，不能在中间状态
+	Consistency 一致性，9w+1w
+	Isolation 隔离性，多个用户访问（高并发）多线程（锁）
+		a update salary = 100;
+		b update salary = 2000;
+		锁表 lock，行集锁，DBA高级
+	Durability 持久性，在改变内存数据，会同步写日志（磁盘）
+
+3）事务：commit提交（成功），rollback回滚（出错）
+	savepoint 提高性能
+
+4）子查询（嵌套查询）subquery
+	查询中还有一个查询 
+	=(子查询)
+	in(子查询)
+5）表关联
+	一对一
+	一对多，多对一
+	多对多
+6）sql实现表联查
+	笛卡尔积（底层实现）
+	内连接 inner join
+	左外连接 left (outer) join
+	右外连接 right (outer) join
+7）索引是必须建的吗？不是
+	独占空间，字段少，遍历快
+	索引：int/bigint/long 二分查找，btree
+
